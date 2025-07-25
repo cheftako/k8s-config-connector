@@ -1,18 +1,16 @@
-/*
-Copyright 2020 Google LLC
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// Copyright 2025 Google LLC
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//    http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 
 package v1beta1
 
@@ -21,30 +19,50 @@ import (
 
 	"github.com/GoogleCloudPlatform/k8s-config-connector/pkg/clients/generated/apis/k8s/v1alpha1"
 	"github.com/GoogleCloudPlatform/k8s-config-connector/pkg/controller/direct"
-	"github.com/GoogleCloudPlatform/k8s-config-connector/pkg/controller/direct/directbase"
-	"github.com/GoogleCloudPlatform/k8s-config-connector/pkg/controller/direct/registry"
 )
 
-func init() {
-	registry.RegisterModel(v1alpha1.SchemeGroupVersion.WithKind("ContainerCluster"), &containerClusterModel{})
-}
-
-type containerClusterModel struct {
-	directbase.CoreModel
-}
-
-func (m *containerClusterModel) Build(c direct.Context, b *direct.Builder, resource *v1alpha1.Resource) (interface{}, error) {
-	gcp, err := m.buildGCP(c, b, resource)
-	if err != nil {
-		return nil, err
+func (c *ContainerCluster) GetID() (string, error) {
+	if c.Spec.ResourceID == nil {
+		return "", fmt.Errorf("resourceID is empty")
 	}
-	return gcp, nil
+	return *c.Spec.ResourceID, nil
 }
 
-func (m *containerClusterModel) buildGCP(c direct.Context, b *direct.Builder, resource *v1alpha1.Resource) (interface{}, error) {
-	gcp := &ContainerCluster{}
-	if err := resource.Spec.UnmarshalTo(gcp); err != nil {
-		return nil, fmt.Errorf("error unmarshalling to ContainerCluster: %w", err)
+func (c *ContainerCluster) SetID(id string) {
+	if c.Spec.ResourceID == nil {
+		c.Spec.ResourceID = new(string)
 	}
-	return gcp, nil
+	*c.Spec.ResourceID = id
+}
+
+func (c *ContainerCluster) GetObservedGeneration() int64 {
+	return c.Status.ObservedGeneration
+}
+
+func (c *ContainerCluster) SetObservedGeneration(generation int64) {
+	c.Status.ObservedGeneration = generation
+}
+
+func (c *ContainerCluster) GetConditions() []v1alpha1.Condition {
+	return c.Status.Conditions
+}
+
+func (c *ContainerCluster) SetConditions(conditions []v1alpha1.Condition) {
+	c.Status.Conditions = conditions
+}
+
+func (c *ContainerCluster) GetLabels() map[string]string {
+	return c.Labels
+}
+
+func (c *ContainerCluster) GetAnnotations() map[string]string {
+	return c.Annotations
+}
+
+func (c *ContainerCluster) GetExternalRef() (string, bool) {
+	return direct.GetExternal(c)
+}
+
+func (c *ContainerCluster) SetExternalRef(external string) {
+	direct.SetExternal(c, external)
 }

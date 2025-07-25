@@ -1,117 +1,159 @@
-/*
-Copyright 2020 Google LLC
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// Copyright 2025 Google LLC
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//    http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 
 package v1beta1
 
 import (
+	"github.com/GoogleCloudPlatform/k8s-config-connector/pkg/clients/generated/apis/k8s/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 )
+
+type ClusterSpec struct {
+	/* An optional description of this cluster. */
+	// +optional
+	Description *string `json:"description,omitempty"`
+
+	/* The initial number of nodes for the cluster. */
+	// +optional
+	InitialNodeCount *int32 `json:"initialNodeCount,omitempty"`
+
+	/* The node configuration for the cluster. */
+	// +optional
+	NodeConfig *NodeConfig `json:"nodeConfig,omitempty"`
+
+	/* The master auth settings for controlling access to the cluster endpoint. */
+	// +optional
+	MasterAuth *MasterAuth `json:"masterAuth,omitempty"`
+
+	/* The logging service the cluster should use to write logs. */
+	// +optional
+	LoggingService *string `json:"loggingService,omitempty"`
+
+	/* The monitoring service the cluster should use to write metrics. */
+	// +optional
+	MonitoringService *string `json:"monitoringService,omitempty"`
+
+	/* The name of the Google Compute Engine network to which the cluster is connected. */
+	// +optional
+	NetworkRef *v1alpha1.ResourceRef `json:"networkRef,omitempty"`
+
+	/* The name of the Google Compute Engine subnetwork to which the cluster is connected. */
+	// +optional
+	SubnetworkRef *v1alpha1.ResourceRef `json:"subnetworkRef,omitempty"`
+
+	/* The location for the cluster. */
+	Location string `json:"location"`
+
+	/* The list of node pools associated with this cluster. */
+	// +optional
+	NodePools []NodePool `json:"nodePools,omitempty"`
+
+	/* Configuration for the legacy ABAC authorization mode. */
+	// +optional
+	LegacyAbac *LegacyAbac `json:"legacyAbac,omitempty"`
+
+	/* Configuration for NetworkPolicy. */
+	// +optional
+	NetworkPolicy *NetworkPolicy `json:"networkPolicy,omitempty"`
+
+	/* Configuration for cluster add-ons. */
+	// +optional
+	AddonsConfig *AddonsConfig `json:"addonsConfig,omitempty"`
+
+	/* The private cluster config. */
+	// +optional
+	PrivateClusterConfig *PrivateClusterConfig `json:"privateClusterConfig,omitempty"`
+
+	/* The master authorized networks configuration. */
+	// +optional
+	MasterAuthorizedNetworksConfig *MasterAuthorizedNetworksConfig `json:"masterAuthorizedNetworksConfig,omitempty"`
+
+	/* The release channel configuration. */
+	// +optional
+	ReleaseChannel *ReleaseChannel `json:"releaseChannel,omitempty"`
+
+	/* The workload identity configuration. */
+	// +optional
+	WorkloadIdentityConfig *WorkloadIdentityConfig `json:"workloadIdentityConfig,omitempty"`
+
+	/* Immutable. Optional. The name of the resource. Used for creation and acquisition. When unset, the value of `metadata.name` is used as the default. */
+	// +optional
+	ResourceID *string `json:"resourceID,omitempty"`
+}
+
+type ClusterStatus struct {
+	/* Conditions represent the latest available observations of the
+	   ContainerCluster's current state. */
+	// +optional
+	Conditions []v1alpha1.Condition `json:"conditions,omitempty"`
+
+	/* The IP address of this cluster's master endpoint. */
+	// +optional
+	Endpoint *string `json:"endpoint,omitempty"`
+
+	/* The current software version of the master endpoint. */
+	// +optional
+	CurrentMasterVersion *string `json:"currentMasterVersion,omitempty"`
+
+	/* The current version of the node software components. */
+	// +optional
+	CurrentNodeVersion *string `json:"currentNodeVersion,omitempty"`
+
+	/* The time the cluster was created, in RFC3339 text format. */
+	// +optional
+	CreateTime *string `json:"createTime,omitempty"`
+
+	/* The current status of this cluster. */
+	// +optional
+	Status *string `json:"status,omitempty"`
+
+	/* The number of nodes currently in the cluster. */
+	// +optional
+	CurrentNodeCount *int32 `json:"currentNodeCount,omitempty"`
+
+	/* ObservedGeneration is the generation of the resource that was most recently observed by the Config Connector controller. If this is equal to metadata.generation, then that means that the current reported status reflects the most recent desired state of the resource. */
+	// +optional
+	ObservedGeneration *int64 `json:"observedGeneration,omitempty"`
+
+	/* The self link of the cluster. */
+	// +optional
+	SelfLink *string `json:"selfLink,omitempty"`
+}
 
 // +genclient
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+// +kubebuilder:resource:categories=gcp,shortName=gcpcontainercluster;gcpcontainerclusters
+// +kubebuilder:subresource:status
+// +kubebuilder:metadata:labels="cnrm.cloud.google.com/managed-by-kcc=true";"cnrm.cloud.google.com/stability-level=stable";"cnrm.cloud.google.com/system=true"
+// +kubebuilder:printcolumn:name="Age",JSONPath=".metadata.creationTimestamp",type="date"
+// +kubebuilder:printcolumn:name="Ready",JSONPath=".status.conditions[?(@.type=='Ready')].status",type="string"
+// +kubebuilder:printcolumn:name="Status",JSONPath=".status.conditions[?(@.type=='Ready')].message",type="string"
+// +kubebuilder:printcolumn:name="Endpoint",JSONPath=".status.endpoint",type="string"
+// +kubebuilder:printcolumn:name="MasterVersion",JSONPath=".status.currentMasterVersion",type="string"
+// +kubebuilder:printcolumn:name="Location",JSONPath=".spec.location",type="string"
 
-// ContainerCluster is the Schema for the containerclusters API
+// ContainerCluster is the Schema for the container API
 // +k8s:openapi-gen=true
 type ContainerCluster struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   ContainerClusterSpec   `json:"spec,omitempty"`
-	Status ContainerClusterStatus `json:"status,omitempty"`
-}
-
-// ContainerClusterSpec defines the desired state of ContainerCluster
-type ContainerClusterSpec struct {
-	// The name of the cluster, unique within the project and location.
-	Name string `json:"name"`
-	// The location for the cluster.
-	Location string `json:"location"`
-	// The initial number of nodes for the cluster.
-	InitialNodeCount int64 `json:"initialNodeCount,omitempty"`
-	// The configuration for the master node.
-	MasterAuth *MasterAuth `json:"masterAuth,omitempty"`
-	// The configuration for the node pools in the cluster.
-	NodePools []*NodePool `json:"nodePools,omitempty"`
-	// The configuration for addons.
-	AddonsConfig *AddonsConfig `json:"addonsConfig,omitempty"`
-	// The configuration for network policy.
-	NetworkPolicy *NetworkPolicy `json:"networkPolicy,omitempty"`
-	// The IP allocation policy for the cluster.
-	IPAllocationPolicy *IPAllocationPolicy `json:"ipAllocationPolicy,omitempty"`
-	// The configuration for master authorized networks.
-	MasterAuthorizedNetworksConfig *MasterAuthorizedNetworksConfig `json:"masterAuthorizedNetworksConfig,omitempty"`
-	// The configuration for private clusters.
-	PrivateClusterConfig *PrivateClusterConfig `json:"privateClusterConfig,omitempty"`
-	// The configuration for binary authorization.
-	BinaryAuthorization *BinaryAuthorization `json:"binaryAuthorization,omitempty"`
-	// The configuration for shielded nodes.
-	ShieldedNodes *ShieldedNodes `json:"shieldedNodes,omitempty"`
-	// The release channel for the cluster.
-	ReleaseChannel *ReleaseChannel `json:"releaseChannel,omitempty"`
-	// The workload identity configuration for the cluster.
-	WorkloadIdentityConfig *WorkloadIdentityConfig `json:"workloadIdentityConfig,omitempty"`
-	// The notification configuration for the cluster.
-	NotificationConfig *NotificationConfig `json:"notificationConfig,omitempty"`
-	// The confidential nodes configuration for the cluster.
-	ConfidentialNodes *ConfidentialNodes `json:"confidentialNodes,omitempty"`
-	// The authenticator groups configuration for the cluster.
-	AuthenticatorGroupsConfig *AuthenticatorGroupsConfig `json:"authenticatorGroupsConfig,omitempty"`
-	// The logging service for the cluster.
-	LoggingService string `json:"loggingService,omitempty"`
-	// The monitoring service for the cluster.
-	MonitoringService string `json:"monitoringService,omitempty"`
-	// The networking configuration for the cluster.
-	Network string `json:"network,omitempty"`
-	// The subnetwork configuration for the cluster.
-	Subnetwork string `json:"subnetwork,omitempty"`
-	// The default maximum number of pods per node in the cluster.
-	DefaultMaxPodsPerNode int64 `json:"defaultMaxPodsPerNode,omitempty"`
-	// The resource usage export configuration for the cluster.
-	ResourceUsageExportConfig *ResourceUsageExportConfig `json:"resourceUsageExportConfig,omitempty"`
-	// The vertical pod autoscaling configuration for the cluster.
-	VerticalPodAutoscaling *VerticalPodAutoscaling `json:"verticalPodAutoscaling,omitempty"`
-	// The resource labels for the cluster.
-	ResourceLabels map[string]string `json:"resourceLabels,omitempty"`
-}
-
-// ContainerClusterStatus defines the observed state of ContainerCluster
-type ContainerClusterStatus struct {
-	// The status of the cluster.
-	Status string `json:"status,omitempty"`
-	// The endpoint for the cluster.
-	Endpoint string `json:"endpoint,omitempty"`
-	// The current master version of the cluster.
-	CurrentMasterVersion string `json:"currentMasterVersion,omitempty"`
-	// The current node version of the cluster.
-	CurrentNodeVersion string `json:"currentNodeVersion,omitempty"`
-	// The create time of the cluster.
-	CreateTime string `json:"createTime,omitempty"`
-	// The expire time of the cluster.
-	ExpireTime string `json:"expireTime,omitempty"`
-	// The current node count of the cluster.
-	CurrentNodeCount int64 `json:"currentNodeCount,omitempty"`
-	// The services IPv4 CIDR block for the cluster.
-	ServicesIPV4CIDR string `json:"servicesIpv4Cidr,omitempty"`
-	// The TPU IPv4 CIDR block for the cluster.
-	TpuIPV4CIDRBlock string `json:"tpuIpv4CidrBlock,omitempty"`
+	Spec   ClusterSpec   `json:"spec,omitempty"`
+	Status ClusterStatus `json:"status,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
-
 // ContainerClusterList contains a list of ContainerCluster
 type ContainerClusterList struct {
 	metav1.TypeMeta `json:",inline"`
@@ -119,386 +161,295 @@ type ContainerClusterList struct {
 	Items           []ContainerCluster `json:"items"`
 }
 
-// MasterAuth defines the master authentication configuration.
+type NodeConfig struct {
+	/* The name of a Google Compute Engine machine type. */
+	// +optional
+	MachineType *string `json:"machineType,omitempty"`
+
+	/* Size of the disk attached to each node, specified in GB. */
+	// +optional
+	DiskSizeGb *int32 `json:"diskSizeGb,omitempty"`
+
+	/* The set of Google API scopes to be made available on all of the node VMs. */
+	// +optional
+	OAuthScopes []string `json:"oauthScopes,omitempty"`
+
+	/* The Google Cloud Platform Service Account to be used by the node VMs. */
+	// +optional
+	ServiceAccountRef *v1alpha1.ResourceRef `json:"serviceAccountRef,omitempty"`
+
+	/* The metadata key/value pairs assigned to instances. */
+	// +optional
+	Metadata map[string]string `json:"metadata,omitempty"`
+
+	/* The image type to use for this node. */
+	// +optional
+	ImageType *string `json:"imageType,omitempty"`
+
+	/* The map of Kubernetes labels (key/value pairs) to be applied to each node. */
+	// +optional
+	Labels map[string]string `json:"labels,omitempty"`
+
+	/* The number of local SSD disks to attach to the node. */
+	// +optional
+	LocalSsdCount *int32 `json:"localSsdCount,omitempty"`
+
+	/* The list of instance tags applied to all nodes. */
+	// +optional
+	Tags []string `json:"tags,omitempty"`
+
+	/* Whether the nodes are created as preemptible VM instances. */
+	// +optional
+	Preemptible *bool `json:"preemptible,omitempty"`
+
+	/* A list of hardware accelerators to be attached to each node. */
+	// +optional
+	GuestAccelerator []AcceleratorConfig `json:"guestAccelerator,omitempty"`
+
+	/* Type of the disk attached to each node. */
+	// +optional
+	DiskType *string `json:"diskType,omitempty"`
+
+	/* The name of the min CPU platform to be used by this node pool. */
+	// +optional
+	MinCpuPlatform *string `json:"minCpuPlatform,omitempty"`
+
+	/* The workload metadata configuration for this node pool. */
+	// +optional
+	WorkloadMetadataConfig *WorkloadMetadataConfig `json:"workloadMetadataConfig,omitempty"`
+
+	/* List of kubernetes taints to be applied to each node. */
+	// +optional
+	Taint []NodeTaint `json:"taint,omitempty"`
+
+	/* The Customer Managed Encryption Key used to encrypt the boot disk attached to each node in the node pool. */
+	// +optional
+	BootDiskKmsKeyRef *v1alpha1.ResourceRef `json:"bootDiskKmsKeyRef,omitempty"`
+}
+
+type NodePool struct {
+	/* The name of the node pool. */
+	Name string `json:"name"`
+
+	/* The node configuration for the pool. */
+	// +optional
+	Config *NodeConfig `json:"config,omitempty"`
+
+	/* The initial number of nodes for the pool. */
+	// +optional
+	InitialNodeCount *int32 `json:"initialNodeCount,omitempty"`
+
+	/* The version of the Kubernetes of this node. */
+	// +optional
+	Version *string `json:"version,omitempty"`
+
+	/* Autoscaler configuration for this node pool. */
+	// +optional
+	Autoscaling *NodePoolAutoscaling `json:"autoscaling,omitempty"`
+
+	/* Node management configuration, consisting of options for handling node upgrades. */
+	// +optional
+	Management *NodeManagement `json:"management,omitempty"`
+
+	/* The constraint on the maximum number of pods that can be run simultaneously on a node in the node pool. */
+	// +optional
+	MaxPodsPerNode *int32 `json:"maxPodsPerNode,omitempty"`
+}
+
 type MasterAuth struct {
-	// The username for basic authentication.
-	Username string `json:"username,omitempty"`
-	// The password for basic authentication.
-	Password string `json:"password,omitempty"`
-	// The client certificate configuration.
+	/* The username to use for HTTP basic authentication to the master endpoint. */
+	// +optional
+	Username *string `json:"username,omitempty"`
+
+	/* The password to use for HTTP basic authentication to the master endpoint. */
+	// +optional
+	Password *v1alpha1.SecretKeyRef `json:"password,omitempty"`
+
+	/* Configuration for client certificate authentication on the cluster. */
+	// +optional
 	ClientCertificateConfig *ClientCertificateConfig `json:"clientCertificateConfig,omitempty"`
 }
 
-// ClientCertificateConfig defines the client certificate configuration.
 type ClientCertificateConfig struct {
-	// Whether to issue a client certificate.
-	IssueClientCertificate bool `json:"issueClientCertificate,omitempty"`
+	/* Whether client certificate authorization is enabled for this cluster. */
+	IssueClientCertificate bool `json:"issueClientCertificate"`
 }
 
-// NodePool defines the node pool configuration.
-type NodePool struct {
-	// The name of the node pool.
-	Name string `json:"name"`
-	// The initial number of nodes for the node pool.
-	InitialNodeCount int64 `json:"initialNodeCount,omitempty"`
-	// The configuration for the nodes in the node pool.
-	Config *NodeConfig `json:"config,omitempty"`
-	// The autoscaling configuration for the node pool.
-	Autoscaling *NodePoolAutoscaling `json:"autoscaling,omitempty"`
-	// The management configuration for the node pool.
-	Management *NodeManagement `json:"management,omitempty"`
-	// The maximum number of pods per node in the node pool.
-	MaxPodsPerNode int64 `json:"maxPodsPerNode,omitempty"`
-	// The network configuration for the node pool.
-	NetworkConfig *NodeNetworkConfig `json:"networkConfig,omitempty"`
-}
-
-// NodeConfig defines the node configuration.
-type NodeConfig struct {
-	// The machine type for the nodes.
-	MachineType string `json:"machineType,omitempty"`
-	// The disk size for the nodes.
-	DiskSizeGb int64 `json:"diskSizeGb,omitempty"`
-	// The OAuth scopes for the nodes.
-	OAuthScopes []string `json:"oauthScopes,omitempty"`
-	// The service account for the nodes.
-	ServiceAccount string `json:"serviceAccount,omitempty"`
-	// The metadata for the nodes.
-	Metadata map[string]string `json:"metadata,omitempty"`
-	// The image type for the nodes.
-	ImageType string `json:"imageType,omitempty"`
-	// The labels for the nodes.
-	Labels map[string]string `json:"labels,omitempty"`
-	// The local SSD count for the nodes.
-	LocalSsdCount int64 `json:"localSsdCount,omitempty"`
-	// The tags for the nodes.
-	Tags []string `json:"tags,omitempty"`
-	// Whether the nodes are preemptible.
-	Preemptible bool `json:"preemptible,omitempty"`
-	// The accelerators for the nodes.
-	Accelerators []*AcceleratorConfig `json:"accelerators,omitempty"`
-	// The disk type for the nodes.
-	DiskType string `json:"diskType,omitempty"`
-	// The minimum CPU platform for the nodes.
-	MinCpuPlatform string `json:"minCpuPlatform,omitempty"`
-	// The workload metadata configuration for the nodes.
-	WorkloadMetadataConfig *WorkloadMetadataConfig `json:"workloadMetadataConfig,omitempty"`
-	// The taints for the nodes.
-	Taints []*NodeTaint `json:"taints,omitempty"`
-	// The sandbox configuration for the nodes.
-	SandboxConfig *SandboxConfig `json:"sandboxConfig,omitempty"`
-	// The node group for the nodes.
-	NodeGroup string `json:"nodeGroup,omitempty"`
-	// The reservation affinity for the nodes.
-	ReservationAffinity *ReservationAffinity `json:"reservationAffinity,omitempty"`
-	// The shielded instance configuration for the nodes.
-	ShieldedInstanceConfig *ShieldedInstanceConfig `json:"shieldedInstanceConfig,omitempty"`
-	// The Linux node configuration for the nodes.
-	LinuxNodeConfig *LinuxNodeConfig `json:"linuxNodeConfig,omitempty"`
-	// The kubelet configuration for the nodes.
-	KubeletConfig *NodeKubeletConfig `json:"kubeletConfig,omitempty"`
-	// The boot disk KMS key for the nodes.
-	BootDiskKmsKey string `json:"bootDiskKmsKey,omitempty"`
-	// The GCFS configuration for the nodes.
-	GcfsConfig *GcfsConfig `json:"gcfsConfig,omitempty"`
-}
-
-// NodePoolAutoscaling defines the node pool autoscaling configuration.
-type NodePoolAutoscaling struct {
-	// Whether autoscaling is enabled.
-	Enabled bool `json:"enabled,omitempty"`
-	// The minimum number of nodes in the node pool.
-	MinNodeCount int64 `json:"minNodeCount,omitempty"`
-	// The maximum number of nodes in the node pool.
-	MaxNodeCount int64 `json:"maxNodeCount,omitempty"`
-}
-
-// NodeManagement defines the node management configuration.
-type NodeManagement struct {
-	// Whether auto upgrade is enabled.
-	AutoUpgrade bool `json:"autoUpgrade,omitempty"`
-	// Whether auto repair is enabled.
-	AutoRepair bool `json:"autoRepair,omitempty"`
-}
-
-// NodeNetworkConfig defines the node network configuration.
-type NodeNetworkConfig struct {
-	// Whether to create a pod range.
-	CreatePodRange bool `json:"createPodRange,omitempty"`
-	// The pod range.
-	PodRange string `json:"podRange,omitempty"`
-	// The pod IPv4 CIDR block.
-	PodIpv4CidrBlock string `json:"podIpv4CidrBlock,omitempty"`
-}
-
-// AcceleratorConfig defines the accelerator configuration.
-type AcceleratorConfig struct {
-	// The number of accelerators.
-	AcceleratorCount int64 `json:"acceleratorCount,omitempty"`
-	// The type of accelerator.
-	AcceleratorType string `json:"acceleratorType,omitempty"`
-}
-
-// WorkloadMetadataConfig defines the workload metadata configuration.
-type WorkloadMetadataConfig struct {
-	// The node metadata.
-	NodeMetadata string `json:"nodeMetadata,omitempty"`
-}
-
-// NodeTaint defines the node taint configuration.
-type NodeTaint struct {
-	// The key of the taint.
-	Key string `json:"key,omitempty"`
-	// The value of the taint.
-	Value string `json:"value,omitempty"`
-	// The effect of the taint.
-	Effect string `json:"effect,omitempty"`
-}
-
-// SandboxConfig defines the sandbox configuration.
-type SandboxConfig struct {
-	// The type of sandbox.
-	Type string `json:"type,omitempty"`
-}
-
-// ReservationAffinity defines the reservation affinity configuration.
-type ReservationAffinity struct {
-	// The type of reservation consumption.
-	ConsumeReservationType string `json:"consumeReservationType,omitempty"`
-	// The key of the reservation.
-	Key string `json:"key,omitempty"`
-	// The values of the reservation.
-	Values []string `json:"values,omitempty"`
-}
-
-// ShieldedInstanceConfig defines the shielded instance configuration.
-type ShieldedInstanceConfig struct {
-	// Whether to enable secure boot.
-	EnableSecureBoot bool `json:"enableSecureBoot,omitempty"`
-	// Whether to enable integrity monitoring.
-	EnableIntegrityMonitoring bool `json:"enableIntegrityMonitoring,omitempty"`
-}
-
-// LinuxNodeConfig defines the Linux node configuration.
-type LinuxNodeConfig struct {
-	// The sysctls for the nodes.
-	Sysctls map[string]string `json:"sysctls,omitempty"`
-}
-
-// NodeKubeletConfig defines the node kubelet configuration.
-type NodeKubeletConfig struct {
-	// The CPU manager policy.
-	CpuManagerPolicy string `json:"cpuManagerPolicy,omitempty"`
-	// Whether the CPU CFS quota is enabled.
-	CpuCfsQuota bool `json:"cpuCfsQuota,omitempty"`
-	// The CPU CFS quota period.
-	CpuCfsQuotaPeriod string `json:"cpuCfsQuotaPeriod,omitempty"`
-}
-
-// GcfsConfig defines the GCFS configuration.
-type GcfsConfig struct {
-	// Whether GCFS is enabled.
-	Enabled bool `json:"enabled,omitempty"`
-}
-
-// AddonsConfig defines the addons configuration.
 type AddonsConfig struct {
-	// The HTTP load balancing configuration.
+	/* Configuration for the HTTP (L7) load balancing controller addon. */
+	// +optional
 	HttpLoadBalancing *HttpLoadBalancing `json:"httpLoadBalancing,omitempty"`
-	// The horizontal pod autoscaling configuration.
+
+	/* Configuration for the horizontal pod autoscaling feature, which increases or decreases the number of replica pods a replication controller has based on the resource usage of the existing pods. */
+	// +optional
 	HorizontalPodAutoscaling *HorizontalPodAutoscaling `json:"horizontalPodAutoscaling,omitempty"`
-	// The network policy configuration.
+
+	/* Configuration for the Kubernetes Dashboard. */
+	// +optional
+	KubernetesDashboard *KubernetesDashboard `json:"kubernetesDashboard,omitempty"`
+
+	/* Configuration for NetworkPolicy. */
+	// +optional
 	NetworkPolicyConfig *NetworkPolicyConfig `json:"networkPolicyConfig,omitempty"`
-	// The Cloud Run configuration.
+
+	/* Configuration for the Cloud Run addon. */
+	// +optional
 	CloudRunConfig *CloudRunConfig `json:"cloudRunConfig,omitempty"`
-	// The DNS cache configuration.
+
+	/* Configuration for NodeLocal DNSCache. */
+	// +optional
 	DnsCacheConfig *DnsCacheConfig `json:"dnsCacheConfig,omitempty"`
-	// The Config Connector configuration.
+
+	/* Configuration for the ConfigConnector add-on. */
+	// +optional
 	ConfigConnectorConfig *ConfigConnectorConfig `json:"configConnectorConfig,omitempty"`
-	// The GCE persistent disk CSI driver configuration.
+
+	/* Configuration for the GCE PD CSI driver addon. */
+	// +optional
 	GcePersistentDiskCsiDriverConfig *GcePersistentDiskCsiDriverConfig `json:"gcePersistentDiskCsiDriverConfig,omitempty"`
-	// The GKE backup agent configuration.
-	GkeBackupAgentConfig *GkeBackupAgentConfig `json:"gkeBackupAgentConfig,omitempty"`
 }
 
-// HttpLoadBalancing defines the HTTP load balancing configuration.
 type HttpLoadBalancing struct {
-	// Whether HTTP load balancing is disabled.
-	Disabled bool `json:"disabled,omitempty"`
+	/* Whether the HTTP Load Balancing controller is enabled in the cluster. */
+	Disabled bool `json:"disabled"`
 }
 
-// HorizontalPodAutoscaling defines the horizontal pod autoscaling configuration.
 type HorizontalPodAutoscaling struct {
-	// Whether horizontal pod autoscaling is disabled.
-	Disabled bool `json:"disabled,omitempty"`
+	/* Whether the Horizontal Pod Autoscaling feature is enabled in the cluster. */
+	Disabled bool `json:"disabled"`
 }
 
-// NetworkPolicyConfig defines the network policy configuration.
+type KubernetesDashboard struct {
+	/* Whether the Kubernetes Dashboard is enabled for this cluster. */
+	Disabled bool `json:"disabled"`
+}
+
 type NetworkPolicyConfig struct {
-	// Whether network policy is disabled.
-	Disabled bool `json:"disabled,omitempty"`
+	/* Whether NetworkPolicy is enabled for this cluster. */
+	Disabled bool `json:"disabled"`
 }
 
-// CloudRunConfig defines the Cloud Run configuration.
 type CloudRunConfig struct {
-	// Whether Cloud Run is disabled.
-	Disabled bool `json:"disabled,omitempty"`
+	/* Whether Cloud Run is enabled for this cluster. */
+	Disabled bool `json:"disabled"`
 }
 
-// DnsCacheConfig defines the DNS cache configuration.
 type DnsCacheConfig struct {
-	// Whether DNS cache is enabled.
-	Enabled bool `json:"enabled,omitempty"`
+	/* Whether NodeLocal DNSCache is enabled for this cluster. */
+	Enabled bool `json:"enabled"`
 }
 
-// ConfigConnectorConfig defines the Config Connector configuration.
 type ConfigConnectorConfig struct {
-	// Whether Config Connector is enabled.
-	Enabled bool `json:"enabled,omitempty"`
+	/* Whether ConfigConnector is enabled for this cluster. */
+	Enabled bool `json:"enabled"`
 }
 
-// GcePersistentDiskCsiDriverConfig defines the GCE persistent disk CSI driver configuration.
 type GcePersistentDiskCsiDriverConfig struct {
-	// Whether the GCE persistent disk CSI driver is enabled.
-	Enabled bool `json:"enabled,omitempty"`
+	/* Whether the GCE PD CSI driver is enabled for this cluster. */
+	Enabled bool `json:"enabled"`
 }
 
-// GkeBackupAgentConfig defines the GKE backup agent configuration.
-type GkeBackupAgentConfig struct {
-	// Whether the GKE backup agent is enabled.
-	Enabled bool `json:"enabled,omitempty"`
-}
-
-// NetworkPolicy defines the network policy configuration.
-type NetworkPolicy struct {
-	// The network policy provider.
-	Provider string `json:"provider,omitempty"`
-	// Whether network policy is enabled.
-	Enabled bool `json:"enabled,omitempty"`
-}
-
-// IPAllocationPolicy defines the IP allocation policy configuration.
-type IPAllocationPolicy struct {
-	// Whether to use IP aliases.
-	UseIpAliases bool `json:"useIpAliases,omitempty"`
-	// Whether to create a subnetwork.
-	CreateSubnetwork bool `json:"createSubnetwork,omitempty"`
-	// The name of the subnetwork.
-	SubnetworkName string `json:"subnetworkName,omitempty"`
-	// The cluster IPv4 CIDR block.
-	ClusterIpv4CidrBlock string `json:"clusterIpv4CidrBlock,omitempty"`
-	// The services IPv4 CIDR block.
-	ServicesIpv4CidrBlock string `json:"servicesIpv4CidrBlock,omitempty"`
-}
-
-// MasterAuthorizedNetworksConfig defines the master authorized networks configuration.
-type MasterAuthorizedNetworksConfig struct {
-	// Whether master authorized networks is enabled.
-	Enabled bool `json:"enabled,omitempty"`
-	// The CIDR blocks for master authorized networks.
-	CidrBlocks []*CidrBlock `json:"cidrBlocks,omitempty"`
-}
-
-// CidrBlock defines the CIDR block configuration.
-type CidrBlock struct {
-	// The display name of the CIDR block.
-	DisplayName string `json:"displayName,omitempty"`
-	// The CIDR block.
-	CidrBlock string `json:"cidrBlock,omitempty"`
-}
-
-// PrivateClusterConfig defines the private cluster configuration.
 type PrivateClusterConfig struct {
-	// Whether to enable private nodes.
-	EnablePrivateNodes bool `json:"enablePrivateNodes,omitempty"`
-	// Whether to enable a private endpoint.
-	EnablePrivateEndpoint bool `json:"enablePrivateEndpoint,omitempty"`
-	// The master IPv4 CIDR block.
-	MasterIpv4CidrBlock string `json:"masterIpv4CidrBlock,omitempty"`
-	// The private endpoint.
-	PrivateEndpoint string `json:"privateEndpoint,omitempty"`
-	// The public endpoint.
-	PublicEndpoint string `json:"publicEndpoint,omitempty"`
+	/* Whether the master's internal IP address is used as the cluster endpoint. */
+	// +optional
+	EnablePrivateEndpoint *bool `json:"enablePrivateEndpoint,omitempty"`
+
+	/* The IP range in CIDR notation to use for the master network. */
+	// +optional
+	MasterIpv4CidrBlock *string `json:"masterIpv4CidrBlock,omitempty"`
+
+	/* The peering name and project of the VPC that is peered with the cluster's master network. */
+	// +optional
+	PeeringRef *v1alpha1.ResourceRef `json:"peeringRef,omitempty"`
 }
 
-// BinaryAuthorization defines the binary authorization configuration.
-type BinaryAuthorization struct {
-	// Whether binary authorization is enabled.
-	Enabled bool `json:"enabled,omitempty"`
+type MasterAuthorizedNetworksConfig struct {
+	/* Whether or not master authorized networks is enabled. */
+	Enabled bool `json:"enabled"`
+
+	/* CIDR blocks to be configured as authorized networks. */
+	// +optional
+	CidrBlocks []MasterAuthorizedNetworksConfigCidrBlock `json:"cidrBlocks,omitempty"`
 }
 
-// ShieldedNodes defines the shielded nodes configuration.
-type ShieldedNodes struct {
-	// Whether shielded nodes is enabled.
-	Enabled bool `json:"enabled,omitempty"`
+type MasterAuthorizedNetworksConfigCidrBlock struct {
+	/* Field for users to identify CIDR blocks. */
+	// +optional
+	DisplayName *string `json:"displayName,omitempty"`
+
+	/* The CIDR block. */
+	CidrBlock string `json:"cidrBlock"`
 }
 
-// ReleaseChannel defines the release channel configuration.
+type LegacyAbac struct {
+	/* Whether the ABAC authorizer is enabled for this cluster. */
+	Enabled bool `json:"enabled"`
+}
+
+type NetworkPolicy struct {
+	/* The selected network policy provider. */
+	Provider string `json:"provider"`
+
+	/* Whether network policy is enabled on the cluster. */
+	Enabled bool `json:"enabled"`
+}
+
 type ReleaseChannel struct {
-	// The channel of the release.
-	Channel string `json:"channel,omitempty"`
+	/* The selected release channel. */
+	Channel string `json:"channel"`
 }
 
-// WorkloadIdentityConfig defines the workload identity configuration.
 type WorkloadIdentityConfig struct {
-	// The workload pool.
-	WorkloadPool string `json:"workloadPool,omitempty"`
+	/* The workload pool to attach all Kubernetes service accounts to. */
+	WorkloadPool string `json:"workloadPool"`
 }
 
-// NotificationConfig defines the notification configuration.
-type NotificationConfig struct {
-	// The pub/sub topic for notifications.
-	Pubsub *Pubsub `json:"pubsub,omitempty"`
+type AcceleratorConfig struct {
+	/* The number of the accelerator cards exposed to an instance. */
+	AcceleratorCount int64 `json:"acceleratorCount"`
+
+	/* The accelerator type resource name. */
+	AcceleratorType string `json:"acceleratorType"`
 }
 
-// Pubsub defines the pub/sub configuration.
-type Pubsub struct {
-	// Whether pub/sub is enabled.
-	Enabled bool `json:"enabled,omitempty"`
-	// The pub/sub topic.
-	Topic string `json:"topic,omitempty"`
+type WorkloadMetadataConfig struct {
+	/* Mode is the configuration for how to expose metadata to workloads running on the node. */
+	Mode string `json:"mode"`
 }
 
-// ConfidentialNodes defines the confidential nodes configuration.
-type ConfidentialNodes struct {
-	// Whether confidential nodes is enabled.
-	Enabled bool `json:"enabled,omitempty"`
+type NodeTaint struct {
+	/* The taint key. */
+	Key string `json:"key"`
+
+	/* The taint value. */
+	Value string `json:"value"`
+
+	/* The taint effect. */
+	Effect string `json:"effect"`
 }
 
-// AuthenticatorGroupsConfig defines the authenticator groups configuration.
-type AuthenticatorGroupsConfig struct {
-	// Whether authenticator groups is enabled.
-	Enabled bool `json:"enabled,omitempty"`
-	// The security group for authenticator groups.
-	SecurityGroup string `json:"securityGroup,omitempty"`
+type NodePoolAutoscaling struct {
+	/* Is autoscaling enabled for this node pool. */
+	// +optional
+	Enabled *bool `json:"enabled,omitempty"`
+
+	/* Minimum number of nodes in the NodePool. */
+	// +optional
+	MinNodeCount *int32 `json:"minNodeCount,omitempty"`
+
+	/* Maximum number of nodes in the NodePool. */
+	// +optional
+	MaxNodeCount *int32 `json:"maxNodeCount,omitempty"`
 }
 
-// ResourceUsageExportConfig defines the resource usage export configuration.
-type ResourceUsageExportConfig struct {
-	// The BigQuery destination for resource usage export.
-	BigqueryDestination *BigQueryDestination `json:"bigqueryDestination,omitempty"`
-	// Whether to enable network egress metering.
-	EnableNetworkEgressMetering bool `json:"enableNetworkEgressMetering,omitempty"`
-	// The consumption metering configuration.
-	ConsumptionMeteringConfig *ConsumptionMeteringConfig `json:"consumptionMeteringConfig,omitempty"`
-}
+type NodeManagement struct {
+	/* Whether the nodes will be automatically upgraded. */
+	// +optional
+	AutoUpgrade *bool `json:"autoUpgrade,omitempty"`
 
-// BigQueryDestination defines the BigQuery destination configuration.
-type BigQueryDestination struct {
-	// The dataset ID for the BigQuery destination.
-	DatasetId string `json:"datasetId,omitempty"`
-}
-
-// ConsumptionMeteringConfig defines the consumption metering configuration.
-type ConsumptionMeteringConfig struct {
-	// Whether consumption metering is enabled.
-	Enabled bool `json:"enabled,omitempty"`
-}
-
-// VerticalPodAutoscaling defines the vertical pod autoscaling configuration.
-type VerticalPodAutoscaling struct {
-	// Whether vertical pod autoscaling is enabled.
-	Enabled bool `json:"enabled,omitempty"`
+	/* Whether the nodes will be automatically repaired. */
+	// +optional
+	AutoRepair *bool `json:"autoRepair,omitempty"`
 }
 
 func init() {
