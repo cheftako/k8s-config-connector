@@ -1,0 +1,40 @@
+# In: ~/.gemini/commands/generate/types.toml
+# This command will be invoked via: /generate:types "google/container/v1 container/v1beta1 containercluster"
+
+description = "Create the golang KCC types based on a proto service."
+
+prompt = """
+Please split {{args}} based on the space character ' '.
+Record the first part as {{proto_path}}, the second part as {{api_path}} and the third part as {{name}} .
+Please print out messages like "Protocal path is {{proto_path}}" and "API path is {{api_path}}".
+
+Please analyze the files under the following directory.
+- @.build/third_party/googleapis/{{proto_path}}
+
+Please create or update the following files.
+- @apis/{{api_path}}/{{name}}_identity.go
+- @apis/{{api_path}}/{{name}}_reference.go
+- @apis/{{api_path}}/{{name}}_types.go
+- @apis/{{api_path}}/docs.go
+- @apis/{{api_path}}/generate.sh
+- @apis/{{api_path}}/groupversion_info.go
+
+A working example of this is the merged pull request https://github.com/GoogleCloudPlatform/k8s-config-connector/pull/4626
+Please make sure when getting this PR that is has the title "Resource accesscontextmanager accesscontextmanageraccesspolicy"
+Please note that it was based on files under the following directory.
+- @.build/third_party/googleapis/google/identity/accesscontextmanager/v1
+
+The PR contains the following files.
+- @apis/accesscontextmanager/v1beta/accesspolicy_identity.go
+- @apis/accesscontextmanager/v1beta/accesspolicy_reference.go
+- @apis/accesscontextmanager/v1beta/accesspolicy_types.go
+- @apis/accesscontextmanager/v1beta/docs.go
+- @apis/accesscontextmanager/v1beta/generate.sh
+- @apis/accesscontextmanager/v1beta/groupversion_info.go
+
+Your response should include:
+1. Type objects which can be used to generate the CRD @config/crds/resources/apiextensions.k8s.io_v1_customresourcedefinition_{{name}}.resource.cnrm.cloud.google.com.yaml .
+2. Please honor any existing code, especially if it is code to manage the reference.
+3. A brief explanation of the key changes you made and why.
+4. Ideally the code generated should compile.
+"""

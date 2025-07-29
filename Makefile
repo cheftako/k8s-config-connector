@@ -296,7 +296,6 @@ unmanageddetector:
 	go build -o bin/unmanageddetector github.com/GoogleCloudPlatform/k8s-config-connector/cmd/unmanageddetector
 
 # Build webhook binary from cmd/webhook
-.PHONY: webhook
 webhook:
 	go build -o bin/webhook github.com/GoogleCloudPlatform/k8s-config-connector/cmd/webhook
 
