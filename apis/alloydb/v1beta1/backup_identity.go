@@ -36,18 +36,16 @@ const (
 var _ identity.Identity = &BackupIdentity{}
 var _ identity.Resource = &AlloyDBBackup{}
 
-var parser = regexp.MustCompile(`((//)?alloydb.googleapis.com)?/?projects/(?P<projects>" + util.ProjectIDRegexp + ")/locations/(?P<locations>[[:alpha:]]+)/backups/(?P<backups>[[:alpha:]]+)`)
+var parser = regexp.MustCompile(`^((//)?alloydb.googleapis.com)?/?(?P<resourceID>projects/[^/]+/locations/[^/]+/backups/[^/]+)`)
 
 // BackupIdentity represents the identity of an alloydb backup.
 // +k8s:deepcopy-gen=false
 type BackupIdentity struct {
-	Parent   string
-	Location string
-	Backup   string
+	ResourceID string
 }
 
 func (i *BackupIdentity) String() string {
-	return "projects/" + i.Parent + "/locations/" + i.Location + "/backups/" + i.Backup
+	return i.ResourceID
 }
 
 func (i *BackupIdentity) FromExternal(ref string) error {
@@ -55,14 +53,12 @@ func (i *BackupIdentity) FromExternal(ref string) error {
 	// But that format is //alloydb.googleapis.com/projects/PROJECT_ID/locations/LOCATION/backups/BACKUP
 	// which is not the format used by the service.
 
-	err, identityMap := util.ParseIdentityMap(ref, parser, 3)
+	err, identityMap := util.ParseIdentityMap(ref, parser, 1)
 	if err != nil {
 		return fmt.Errorf("format of backup external=%q was not known (use %s): %w", ref, BackupIdentityURL, err)
 	}
 
-	i.Parent = identityMap["projects"]
-	i.Location = identityMap["locations"]
-	i.Backup = identityMap["backups"]
+	i.ResourceID = identityMap["resourceID"]
 
 	return nil
 }
